@@ -1,5 +1,5 @@
 format_version: '2'
-name: FCC_V1_6_1
+name: FCC_V1_6_1a
 versions:
   api: '1.0'
   backend: 1.4.93
@@ -534,9 +534,9 @@ drivers:
           slow_gclk_selection: Generic clock generator 2
   I2C_0:
     user_label: I2C_0
-    definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::SERCOM1::driver_config_definition::I2C.Master.Standard~2FFast-mode::HAL:Driver:I2C.Master.Sync
+    definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::SERCOM1::driver_config_definition::I2C.Master.Standard~2FFast-mode::HAL:Driver:I2C.Master.Async
     functionality: I2C
-    api: HAL:Driver:I2C_Master_Sync
+    api: HAL:Driver:I2C_Master_Async
     configuration:
       i2c_master_advanced: false
       i2c_master_arch_dbgstop: Keep running
@@ -689,17 +689,17 @@ pads:
     mode: Digital output
     user_label: OPEN1
     configuration: null
-  UART_TX:
+  SDA:
     name: PA16
     definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::pad::PA16
     mode: I2C
-    user_label: UART_TX
+    user_label: SDA
     configuration: null
-  UART_RX:
+  SCL:
     name: PA17
     definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::pad::PA17
     mode: I2C
-    user_label: UART_RX
+    user_label: SCL
     configuration: null
   CLOSE2:
     name: PA18
