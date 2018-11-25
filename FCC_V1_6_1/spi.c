@@ -12,7 +12,7 @@
 
 static struct spi_m_async_descriptor SPI_ADC;
 static volatile bool SPI_ADC_txfr_complete = true;
-static struct io_descriptor *SPI_ADC_io;
+// static struct io_descriptor *SPI_ADC_io;
 static bool spi_enabled = SPI_ENABLE_DEFAULT;
 
 void spi_enable(bool value) {
@@ -289,7 +289,7 @@ static void spi_reset(void) {
     SPI_ADC_CLOCK_init();
     spi_m_async_init(&SPI_ADC, SERCOM0);
     SPI_ADC_PORT_init();
-    spi_m_async_get_io_descriptor(&SPI_ADC, &SPI_ADC_io);
+    // spi_m_async_get_io_descriptor(&SPI_ADC, &SPI_ADC_io);
     spi_m_async_register_callback(&SPI_ADC, SPI_M_ASYNC_CB_XFER, (FUNC_PTR)complete_cb_SPI_ADC);
     spi_m_async_enable(&SPI_ADC);
     sb_spi.initialized = true;
@@ -298,20 +298,13 @@ static void spi_reset(void) {
 }
 
 /**
- * This file should include a memory map. The current one is In evernote.
+ * This file should include a memory map. The current one is In Evernote.
  * 0x10-0x13 R: ADC Flow values
  * 0x14-0x17 RW: DAC Flow Setpoints
  * 0x18 R: CmdStatus W: Command
  * 0x19 R: ADC_U2_T
  * 0x1A R: ADC_U3_T
  */
-/**
- * These addresses belong to the I2C module
- * 0x1B R: TS0_Raw_LSW
- * 0x1C R: TS0_Raw_MSW
- * 0x1D R: TS0_Count
- */
-
 static subbus_cache_word_t spi_cache[SPI_HIGH_ADDR-SPI_BASE_ADDR+1] = {
   { 0, 0, true,  false, false, false }, // Offset 0: R: ADC Flow 0
   { 0, 0, true,  false, false, false }, // Offset 1: R: ADC Flow 1

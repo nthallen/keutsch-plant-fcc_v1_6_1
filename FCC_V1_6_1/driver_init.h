@@ -23,25 +23,25 @@ extern "C" {
 
 #include <hal_spi_m_async.h>
 
-#include <hal_i2c_m_sync.h>
+#include <hal_i2c_m_async.h>
 #include <hal_usart_async.h>
 
-extern struct spi_m_async_descriptor SPI_ADC;
+//extern struct spi_m_async_descriptor SPI_ADC;
 
-extern struct i2c_m_sync_desc        I2C_0;
-extern struct usart_async_descriptor USART_CTRL;
+// extern struct i2c_m_sync_desc        I2C_0;
+// extern struct usart_async_descriptor USART_CTRL;
 
-void SPI_ADC_PORT_init(void);
-void SPI_ADC_CLOCK_init(void);
-void SPI_ADC_init(void);
+// void SPI_ADC_PORT_init(void);
+// void SPI_ADC_CLOCK_init(void);
+// void SPI_ADC_init(void);
 
-void I2C_0_CLOCK_init(void);
-void I2C_0_init(void);
-void I2C_0_PORT_init(void);
+// void I2C_0_CLOCK_init(void);
+// void I2C_0_init(void);
+// void I2C_0_PORT_init(void);
 
-void USART_CTRL_PORT_init(void);
-void USART_CTRL_CLOCK_init(void);
-void USART_CTRL_init(void);
+// void USART_CTRL_PORT_init(void);
+// void USART_CTRL_CLOCK_init(void);
+// void USART_CTRL_init(void);
 
 /**
  * \brief Perform system initialization, initialize pins and clocks for

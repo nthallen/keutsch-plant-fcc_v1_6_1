@@ -3,13 +3,16 @@
 #include "subbus.h"
 #include "control.h"
 #include "spi.h"
+#include "i2c.h"
 
 int main(void) {
 	atmel_start_init();
   spi_enable(true);
+  i2c_enable(I2C_ENABLE_DEFAULT);
   if (subbus_add_driver(&sb_base) ||
       subbus_add_driver(&sb_fail_sw) ||
-      subbus_add_driver(&sb_spi)) {
+      subbus_add_driver(&sb_spi) ||
+      subbus_add_driver(&sb_i2c)) {
     while (true) ; // some driver is misconfigured.
   }
   subbus_reset();
