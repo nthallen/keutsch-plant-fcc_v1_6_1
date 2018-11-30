@@ -1,5 +1,5 @@
 format_version: '2'
-name: FCC_V1_6_1a
+name: FCC_V1_6_1
 versions:
   api: '1.0'
   backend: 1.4.93
@@ -376,7 +376,7 @@ drivers:
       gclk_gen_1_oscillator: 32kHz High Accuracy Internal Oscillator (OSC32K)
       gclk_gen_2_div: 1
       gclk_gen_2_div_sel: false
-      gclk_gen_2_oscillator: External Crystal Oscillator 0.4-32MHz (XOSC)
+      gclk_gen_2_oscillator: Fractional Digital Phase Locked Loop (FDPLL96M)
       gclk_gen_3_div: 1
       gclk_gen_3_div_sel: false
       gclk_gen_3_oscillator: External Crystal Oscillator 0.4-32MHz (XOSC)
@@ -609,10 +609,10 @@ drivers:
         - name: Core
           input: Generic clock generator 0
         - name: Slow
-          input: Generic clock generator 3
+          input: Generic clock generator 2
         configuration:
           core_gclk_selection: Generic clock generator 0
-          slow_gclk_selection: Generic clock generator 3
+          slow_gclk_selection: Generic clock generator 2
 pads:
   CS0:
     name: PA02
@@ -689,17 +689,17 @@ pads:
     mode: Digital output
     user_label: OPEN1
     configuration: null
-  SDA:
+  UART_TX:
     name: PA16
     definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::pad::PA16
     mode: I2C
-    user_label: SDA
+    user_label: UART_TX
     configuration: null
-  SCL:
+  UART_RX:
     name: PA17
     definition: Atmel:SAMC21_Drivers:0.0.1::SAMC21E18A-AN::pad::PA17
     mode: I2C
-    user_label: SCL
+    user_label: UART_RX
     configuration: null
   CLOSE2:
     name: PA18

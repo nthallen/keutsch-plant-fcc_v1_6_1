@@ -173,7 +173,7 @@
 // <i> This defines the clock source for generic clock generator 2
 // <id> gclk_gen_2_oscillator
 #ifndef CONF_GCLK_GEN_2_SOURCE
-#define CONF_GCLK_GEN_2_SOURCE GCLK_GENCTRL_SRC_XOSC
+#define CONF_GCLK_GEN_2_SOURCE GCLK_GENCTRL_SRC_DPLL96M
 #endif
 
 // <q> Run in Standby
