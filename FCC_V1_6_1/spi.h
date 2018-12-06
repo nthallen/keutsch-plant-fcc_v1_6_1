@@ -12,9 +12,11 @@
 #define SPI_ADC_U3_ENABLED true
 #define SPI_DAC_U5_ENABLED true
 #define SPI_BASE_ADDR 0x10
-#define SPI_HIGH_ADDR 0x1A
+#define SPI_HIGH_ADDR 0x19
 
 extern subbus_driver_t sb_spi;
 void spi_enable(bool value);
+void spi_single_ended(bool cmd);
+void spi_measure_pos(bool cmd);
 
 #endif

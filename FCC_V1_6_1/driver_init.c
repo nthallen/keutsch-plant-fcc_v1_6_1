@@ -200,173 +200,173 @@ void system_init(void)
 	// GPIO on PA08
 
 	// Set pin direction to input
-	gpio_set_pin_direction(ADR0, GPIO_DIRECTION_IN);
+	// gpio_set_pin_direction(ADR0, GPIO_DIRECTION_IN);
 
-	gpio_set_pin_pull_mode(ADR0,
-	                       // <y> Pull configuration
-	                       // <id> pad_pull_config
-	                       // <GPIO_PULL_OFF"> Off
-	                       // <GPIO_PULL_UP"> Pull-up
-	                       // <GPIO_PULL_DOWN"> Pull-down
-	                       GPIO_PULL_OFF);
+	// gpio_set_pin_pull_mode(ADR0,
+	                       // // <y> Pull configuration
+	                       // // <id> pad_pull_config
+	                       // // <GPIO_PULL_OFF"> Off
+	                       // // <GPIO_PULL_UP"> Pull-up
+	                       // // <GPIO_PULL_DOWN"> Pull-down
+	                       // GPIO_PULL_OFF);
 
-	gpio_set_pin_function(ADR0, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(ADR0, GPIO_PIN_FUNCTION_OFF);
 
 	// GPIO on PA09
 
 	// Set pin direction to input
-	gpio_set_pin_direction(ADR1, GPIO_DIRECTION_IN);
+	// gpio_set_pin_direction(ADR1, GPIO_DIRECTION_IN);
 
-	gpio_set_pin_pull_mode(ADR1,
-	                       // <y> Pull configuration
-	                       // <id> pad_pull_config
-	                       // <GPIO_PULL_OFF"> Off
-	                       // <GPIO_PULL_UP"> Pull-up
-	                       // <GPIO_PULL_DOWN"> Pull-down
-	                       GPIO_PULL_OFF);
+	// gpio_set_pin_pull_mode(ADR1,
+	                       // // <y> Pull configuration
+	                       // // <id> pad_pull_config
+	                       // // <GPIO_PULL_OFF"> Off
+	                       // // <GPIO_PULL_UP"> Pull-up
+	                       // // <GPIO_PULL_DOWN"> Pull-down
+	                       // GPIO_PULL_OFF);
 
-	gpio_set_pin_function(ADR1, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(ADR1, GPIO_PIN_FUNCTION_OFF);
 
 	// GPIO on PA10
 
-	gpio_set_pin_level(CLOSE0,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(CLOSE0,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(CLOSE0, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(CLOSE0, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(CLOSE0, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(CLOSE0, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA11
+	// // GPIO on PA11
 
-	gpio_set_pin_level(OPEN0,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(OPEN0,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(OPEN0, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(OPEN0, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(OPEN0, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(OPEN0, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA14
+	// // GPIO on PA14
 
-	gpio_set_pin_level(CLOSE1,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(CLOSE1,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(CLOSE1, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(CLOSE1, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(CLOSE1, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(CLOSE1, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA15
+	// // GPIO on PA15
 
-	gpio_set_pin_level(OPEN1,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(OPEN1,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(OPEN1, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(OPEN1, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(OPEN1, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(OPEN1, GPIO_PIN_FUNCTION_OFF);
 
 	// GPIO on PA18
 
-	gpio_set_pin_level(CLOSE2,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(CLOSE2,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(CLOSE2, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(CLOSE2, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(CLOSE2, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(CLOSE2, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA19
+	// // GPIO on PA19
 
-	gpio_set_pin_level(OPEN2,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(OPEN2,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(OPEN2, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(OPEN2, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(OPEN2, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(OPEN2, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA22
+	// // GPIO on PA22
 
-	gpio_set_pin_level(CLOSE3,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(CLOSE3,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(CLOSE3, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(CLOSE3, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(CLOSE3, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(CLOSE3, GPIO_PIN_FUNCTION_OFF);
 
-	// GPIO on PA23
+	// // GPIO on PA23
 
-	gpio_set_pin_level(OPEN3,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   false);
+	// gpio_set_pin_level(OPEN3,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // false);
 
-	// Set pin direction to output
-	gpio_set_pin_direction(OPEN3, GPIO_DIRECTION_OUT);
+	// // Set pin direction to output
+	// gpio_set_pin_direction(OPEN3, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(OPEN3, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(OPEN3, GPIO_PIN_FUNCTION_OFF);
 
 	// GPIO on PA27
 
 	// Set pin direction to input
-	gpio_set_pin_direction(ADR3, GPIO_DIRECTION_IN);
+	// gpio_set_pin_direction(ADR3, GPIO_DIRECTION_IN);
 
-	gpio_set_pin_pull_mode(ADR3,
-	                       // <y> Pull configuration
-	                       // <id> pad_pull_config
-	                       // <GPIO_PULL_OFF"> Off
-	                       // <GPIO_PULL_UP"> Pull-up
-	                       // <GPIO_PULL_DOWN"> Pull-down
-	                       GPIO_PULL_OFF);
+	// gpio_set_pin_pull_mode(ADR3,
+	                       // // <y> Pull configuration
+	                       // // <id> pad_pull_config
+	                       // // <GPIO_PULL_OFF"> Off
+	                       // // <GPIO_PULL_UP"> Pull-up
+	                       // // <GPIO_PULL_DOWN"> Pull-down
+	                       // GPIO_PULL_OFF);
 
-	gpio_set_pin_function(ADR3, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(ADR3, GPIO_PIN_FUNCTION_OFF);
 
 	// GPIO on PA28
 
-	gpio_set_pin_level(LED,
-	                   // <y> Initial level
-	                   // <id> pad_initial_level
-	                   // <false"> Low
-	                   // <true"> High
-	                   true);
+	// gpio_set_pin_level(LED,
+	                   // // <y> Initial level
+	                   // // <id> pad_initial_level
+	                   // // <false"> Low
+	                   // // <true"> High
+	                   // true);
 
 	// Set pin direction to output
-	gpio_set_pin_direction(LED, GPIO_DIRECTION_OUT);
+	// gpio_set_pin_direction(LED, GPIO_DIRECTION_OUT);
 
-	gpio_set_pin_function(LED, GPIO_PIN_FUNCTION_OFF);
+	// gpio_set_pin_function(LED, GPIO_PIN_FUNCTION_OFF);
 
 	// SPI_ADC_init();
 

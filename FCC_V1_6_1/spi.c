@@ -314,9 +314,8 @@ static subbus_cache_word_t spi_cache[SPI_HIGH_ADDR-SPI_BASE_ADDR+1] = {
   { 0, 0, true,  false, true,  false }, // Offset 5: RW: DAC Setpoint 1
   { 0, 0, true,  false, true,  false }, // Offset 6: RW: DAC Setpoint 2
   { 0, 0, true,  false, true,  false }, // Offset 7: RW: DAC Setpoint 3
-  { 0, 0, true,  false, true,  false }, // Offset 8: R: CmdStatus W: Command
-  { 0, 0, true,  false, false, false }, // Offset 9: R: ADC_U2_t
-  { 0, 0, true,  false, false, false }  // Offset 10: R: ADC_U3_t
+  { 0, 0, true,  false, false, false }, // Offset 8: R: ADC_U2_t
+  { 0, 0, true,  false, false, false }  // Offset 9: R: ADC_U3_t
 };
 
 subbus_driver_t sb_spi = {
