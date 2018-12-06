@@ -31,7 +31,7 @@
 #define SUBBUS_BDID_ADDR            0x0002
 #define SUBBUS_FAIL_ADDR            0x0004
 #define SUBBUS_SWITCHES_ADDR        0x0005
-#define SUBBUS_MAX_DRIVERS          4
+#define SUBBUS_MAX_DRIVERS          6
 #define SUBBUS_INTERRUPTS           0
 
 #define SUBBUS_ADDR_CMDS 0x18

@@ -29,9 +29,11 @@ static enum ts_state_t ts_state = ts_init;
  * 0x21 R:  TS0_Address
  * 0x22 R:  TS0_Raw_LSW
  * 0x23 R:  TS0_Raw_MSW
- * 0x24 R:  SHT31 Status
- * 0x25 R:  SHT31 Temperature
- * 0x26 R:  SHT31 Relative Humidity
+ * 0x24 R:  ts_state, i2c_error
+ * 0x25 R:  SHT31 Status
+ * 0x26 R:  SHT31 Temperature
+ * 0x27 R:  SHT31 Relative Humidity
+ * 0x28 R:  sht31_state, i2c_error
  */
 static subbus_cache_word_t i2c_cache[I2C_HIGH_ADDR-I2C_BASE_ADDR+1] = {
   { I2C_TS_ID_DEFAULT, 0, true,  false,  true, false }, // Offset 0: RW: TS0_Address
@@ -175,11 +177,11 @@ static bool ts_poll(void) {
           sum += acc;
         }
         if (!read_observed) {
-          i2c_cache[0].cache = n_readings;
+          i2c_cache[1].cache = n_readings;
           int32_t scaled = n_readings ?
             sum * 2 / n_readings : 0;
-          i2c_cache[1].cache = scaled & 0xFFFF;
-          i2c_cache[2].cache = (scaled >> 16) & 0xFFFF;
+          i2c_cache[2].cache = scaled & 0xFFFF;
+          i2c_cache[3].cache = (scaled >> 16) & 0xFFFF;
         }
         
         ts_state = ts_read_adc;
@@ -202,23 +204,10 @@ void i2c_enable(bool value) {
   i2c_enabled = value;
 }
 
-static void I2C_0_PORT_init(void)
-{
-	gpio_set_pin_pull_mode(SDA,
-	                       // <y> Pull configuration
-	                       // <id> pad_pull_config
-	                       // <GPIO_PULL_OFF"> Off
-	                       // <GPIO_PULL_UP"> Pull-up
-	                       // <GPIO_PULL_DOWN"> Pull-down
-	                       GPIO_PULL_OFF);
+static void I2C_0_PORT_init(void) {
+	gpio_set_pin_pull_mode(SDA, GPIO_PULL_OFF);
 	gpio_set_pin_function(SDA, PINMUX_PA16C_SERCOM1_PAD0);
-	gpio_set_pin_pull_mode(SCL,
-	                       // <y> Pull configuration
-	                       // <id> pad_pull_config
-	                       // <GPIO_PULL_OFF"> Off
-	                       // <GPIO_PULL_UP"> Pull-up
-	                       // <GPIO_PULL_DOWN"> Pull-down
-	                       GPIO_PULL_OFF);
+	gpio_set_pin_pull_mode(SCL, GPIO_PULL_OFF);
 	gpio_set_pin_function(SCL, PINMUX_PA17C_SERCOM1_PAD1);
 }
 
