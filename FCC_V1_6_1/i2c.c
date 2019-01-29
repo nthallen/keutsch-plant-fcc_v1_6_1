@@ -76,7 +76,7 @@ static bool ts_poll(void) {
   static int n_readings = 0;
   static int64_t sum = 0;
   static bool read_observed = false;
-  
+
   if (!read_observed && i2c_cache[1].was_read) {
     read_observed = true;
     n_readings = 0;
@@ -183,7 +183,7 @@ static bool ts_poll(void) {
           i2c_cache[2].cache = scaled & 0xFFFF;
           i2c_cache[3].cache = (scaled >> 16) & 0xFFFF;
         }
-        
+
         ts_state = ts_read_adc;
       }
       return true;
@@ -205,22 +205,24 @@ void i2c_enable(bool value) {
 }
 
 static void I2C_0_PORT_init(void) {
-	gpio_set_pin_pull_mode(SDA, GPIO_PULL_OFF);
-	gpio_set_pin_function(SDA, PINMUX_PA16C_SERCOM1_PAD0);
-	gpio_set_pin_pull_mode(SCL, GPIO_PULL_OFF);
-	gpio_set_pin_function(SCL, PINMUX_PA17C_SERCOM1_PAD1);
+  gpio_set_pin_pull_mode(SDA, GPIO_PULL_OFF);
+  gpio_set_pin_function(SDA, PINMUX_PA16C_SERCOM1_PAD0);
+  gpio_set_pin_pull_mode(SCL, GPIO_PULL_OFF);
+  gpio_set_pin_function(SCL, PINMUX_PA17C_SERCOM1_PAD1);
 }
 
 static void I2C_0_CLOCK_init(void) {
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_CORE, CONF_GCLK_SERCOM1_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-	hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_SLOW, CONF_GCLK_SERCOM1_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
-	hri_mclk_set_APBCMASK_SERCOM1_bit(MCLK);
+  hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_CORE, CONF_GCLK_SERCOM1_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+  hri_gclk_write_PCHCTRL_reg(GCLK, SERCOM1_GCLK_ID_SLOW, CONF_GCLK_SERCOM1_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+  hri_mclk_set_APBCMASK_SERCOM1_bit(MCLK);
 }
 
 static void I2C_0_async_error(struct i2c_m_async_desc *const i2c, int32_t error) {
   I2C_txfr_complete = true;
   I2C_error_seen = true;
   I2C_error = error;
+  i2c_enabled = false;
+  _i2c_m_async_set_irq_state(&i2c->device, I2C_M_ASYNC_DEVICE_ERROR, false);
 }
 
 static void I2C_0_txfr_complete(struct i2c_m_async_desc *const i2c) {
