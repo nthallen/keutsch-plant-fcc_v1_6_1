@@ -1,5 +1,6 @@
 #ifndef I2C_H_INCLUDED
 #define I2C_H_INCLUDED
+#include <stdint.h>
 #include "subbus.h"
 
 #define I2C_BASE_ADDR 0x20
@@ -11,5 +12,7 @@
 #define I2C_SHT31_ENABLED  true
 extern subbus_driver_t sb_i2c;
 void i2c_enable(bool value);
+void i2c_write(int16_t i2c_addr, const uint8_t *obuf, int16_t nbytes);
+void i2c_read(int16_t i2c_addr, uint8_t *ibuf, int16_t nbytes);
 
 #endif

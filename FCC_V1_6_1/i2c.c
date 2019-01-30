@@ -20,9 +20,6 @@ static uint8_t ts_ibuf[4];
 #define TS_UNDERFLOW 2
 
 
-enum ts_state_t {ts_init, ts_init_tx, ts_read_adc, ts_read_adc_tx };
-static enum ts_state_t ts_state = ts_init;
-
 /**
  * These addresses belong to the I2C module
  * 0x20 RW: TS0_Count
@@ -58,6 +55,9 @@ static int16_t ts_get_slave_addr(void) {
     default: return 0x14; // Invalid, default to 1
   }
 }
+
+enum ts_state_t {ts_init, ts_init_tx, ts_read_adc, ts_read_adc_tx };
+static enum ts_state_t ts_state = ts_init;
 
 static void  ts_record_i2c_error(enum ts_state_t ts_state, int32_t I2C_error) {
   uint16_t word = ((ts_state & 0x7) << 4) | (I2C_error & 0xF);
@@ -105,9 +105,10 @@ static bool ts_poll(void) {
       }
       n_readings = 0;
       sum = 0;
-      I2C_txfr_complete = false;
-      i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
-      io_write(I2C_0_io, (uint8_t *)"\x04", 1);
+      i2c_write(ts_get_slave_addr(), (const uint8_t *)"\x04", 1);
+      // I2C_txfr_complete = false;
+      // i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
+      // io_write(I2C_0_io, (uint8_t *)"\x04", 1);
       ts_state = ts_init_tx;
       return false;
     case ts_init_tx:
@@ -131,9 +132,10 @@ static bool ts_poll(void) {
         ts_state = ts_init;
       } else {
         nack_limit = 2047;
-        I2C_txfr_complete = false;
-        i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
-        io_read(I2C_0_io, ts_ibuf, 4);
+        i2c_read(ts_get_slave_addr(), (uint8_t *)ts_ibuf, 4);
+        // I2C_txfr_complete = false;
+        // i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
+        // io_read(I2C_0_io, ts_ibuf, 4);
         ts_state = ts_read_adc_tx;
       }
       return false;
@@ -193,11 +195,155 @@ static bool ts_poll(void) {
   return true; // will never actually get here
 }
 
+enum sht_state_t {sht_init, sht_init_tx,
+    sht_issue_read_status, sht_issue_read_status_tx, sht_read_status_tx,
+    sht_issue_convert_trh, sht_issue_convert_trh_tx, sht_read_trh_tx };
+static enum sht_state_t sht_state = sht_init;
+#define SHT_SLAVE_ADDR 0x45
+static uint8_t sht_ibuf[6];
+
+static void  sht_record_i2c_error(enum sht_state_t sht_state, int32_t I2C_error) {
+  uint16_t word = ((sht_state & 0x7) << 4) | (I2C_error & 0xF);
+  i2c_cache[8].cache = (i2c_cache[8].cache & 0xFF00) | word;
+}
+
+static void sht_record_crc_error(uint16_t bit) {
+  i2c_cache[8].cache |= (bit << 8);
+}
+
+/**
+ * @param MSB The first byte transmitted
+ * @param LSB The second byte transmitted
+ * @param CRC The third byte transmitted, which should be the CRC
+ * @return true if CRC checks out
+ *
+ * Calculates the CRC of the first two bytes and compares to the
+ * provided CRC.
+ *
+ * This version does not actually check and returns true
+ * until I can find a reasonably licensed version.
+ */
+bool 	sht_crc8(uint8_t MSB, uint8_t LSB, uint8_t CRC) {
+  return true;
+}
+
 /**
  * @return true if the bus is free and available for another device
  */
 static bool sht31_poll(void) {
+  switch (sht_state) {
+    case sht_init:
+      i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x30\xA2", 2);
+      // I2C_txfr_complete = false;
+      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
+      // io_write(I2C_0_io, (uint8_t *)"\x30\xA2", 2);
+      sht_state = sht_init_tx;
+      return false;
+    case sht_init_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_init;
+      } else {
+        sht_state = sht_issue_read_status;
+      }
+      return true;
+    case sht_issue_read_status:
+      i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\xF3\x2D", 2);
+      // I2C_txfr_complete = false;
+      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
+      // io_write(I2C_0_io, (uint8_t *)"\xF3\x2D", 2);
+      sht_state = sht_read_status_tx;
+      return false;
+    case sht_issue_read_status_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_init;
+        return true;
+      } else {
+        i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 3);
+        // I2C_txfr_complete = false;
+        // io_read(I2C_0_io, sht_ibuf, 3);
+        sht_state = sht_read_status_tx;
+      }
+      return false;
+    case sht_read_status_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_init;
+      } else {
+        if (sht_crc8(sht_ibuf[0], sht_ibuf[1], sht_ibuf[2])) {
+          i2c_cache[5].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
+        } else {
+          sht_record_crc_error(1);
+        }
+        sht_state = sht_issue_convert_trh;
+      }
+      return true;
+    case sht_issue_convert_trh:
+      i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x24\x00", 2);
+      // I2C_txfr_complete = false;
+      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
+      // io_write(I2C_0_io, (uint8_t *)"\x24\x00", 2);
+      sht_state = sht_read_status_tx;
+      return false;
+    case sht_issue_convert_trh_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_init;
+        return true;
+      } else {
+        i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 6);
+        // I2C_txfr_complete = false;
+        // io_read(I2C_0_io, sht_ibuf, 6);
+        sht_state = sht_read_trh_tx;
+      }
+      return false;
+    case sht_read_trh_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        if (I2C_error == I2C_NACK) {
+          sht_state = sht_issue_convert_trh_tx;
+        } else {
+          sht_record_i2c_error(sht_state, I2C_error);
+          sht_state = sht_init;
+        }
+      } else {
+        // process TRH data
+        if (sht_crc8(sht_ibuf[0], sht_ibuf[1], sht_ibuf[2])) {
+          i2c_cache[6].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
+        } else {
+          sht_record_crc_error(2);
+        }
+        if (sht_crc8(sht_ibuf[3], sht_ibuf[4], sht_ibuf[5])) {
+          i2c_cache[7].cache = (sht_ibuf[3] << 8) | sht_ibuf[4];
+        } else {
+          sht_record_crc_error(4);
+        }
+        sht_state = sht_issue_read_status;
+      }
+      return true;
+    default:
+      assert(false, __FILE__, __LINE__);
+  }
   return true;
+}
+
+void i2c_write(int16_t i2c_addr, const uint8_t *obuf, int16_t nbytes) {
+  assert(I2C_txfr_complete, __FILE__, __LINE__);
+  I2C_txfr_complete = false;
+  i2c_m_async_set_slaveaddr(&I2C_0, i2c_addr, I2C_M_SEVEN);
+  io_write(I2C_0_io, obuf, nbytes);
+}
+
+void i2c_read(int16_t i2c_addr, uint8_t *ibuf, int16_t nbytes) {
+  assert(I2C_txfr_complete, __FILE__, __LINE__);
+  I2C_txfr_complete = false;
+  i2c_m_async_set_slaveaddr(&I2C_0, i2c_addr, I2C_M_SEVEN);
+  io_read(I2C_0_io, ibuf, nbytes);
 }
 
 void i2c_enable(bool value) {
@@ -217,12 +363,25 @@ static void I2C_0_CLOCK_init(void) {
   hri_mclk_set_APBCMASK_SERCOM1_bit(MCLK);
 }
 
+/************************************************************************/
+/* Possible error values:                                               */
+/* I2C_OK 0                      Operation successful                   */
+/* I2C_ACK -1                    Received ACK from device on I2C bus    */
+/* I2C_NACK -2                   Received NACK from device on I2C bus   */
+/* I2C_ERR_ARBLOST -3            Arbitration lost                       */
+/* I2C_ERR_BAD_ADDRESS -4        Bad address                            */
+/* I2C_ERR_BUS -5                Bus error                              */
+/* I2C_ERR_BUSY -6               Device busy                            */
+/* I2c_ERR_PACKAGE_COLLISION -7  Package collision                      */
+/************************************************************************/
 static void I2C_0_async_error(struct i2c_m_async_desc *const i2c, int32_t error) {
   I2C_txfr_complete = true;
   I2C_error_seen = true;
   I2C_error = error;
-  i2c_enabled = false;
-  _i2c_m_async_set_irq_state(&i2c->device, I2C_M_ASYNC_DEVICE_ERROR, false);
+  if (error == I2C_ERR_BUS || error == I2C_ERR_ARBLOST) {
+    i2c_enabled = false;
+    _i2c_m_async_set_irq_state(&i2c->device, I2C_M_ASYNC_DEVICE_ERROR, false);
+  }
 }
 
 static void I2C_0_txfr_complete(struct i2c_m_async_desc *const i2c) {
