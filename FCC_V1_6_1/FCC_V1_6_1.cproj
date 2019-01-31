@@ -444,6 +444,12 @@
     <Compile Include="control.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="crc8nrsc_5_byte.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="crc8nrsc_5_byte.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Device_Startup\startup_samc21.c">
       <SubType>compile</SubType>
     </Compile>

@@ -6,6 +6,7 @@
 #include "atmel_start_pins.h"
 #include "i2c.h"
 #include "subbus.h"
+#include "crc8nrsc_5_byte.h"
 
 static struct i2c_m_async_desc I2C_0;
 static bool i2c_enabled = I2C_ENABLE_DEFAULT;
@@ -223,8 +224,8 @@ static void sht_record_crc_error(uint16_t bit) {
  * This version does not actually check and returns true
  * until I can find a reasonably licensed version.
  */
-bool 	sht_crc8(uint8_t MSB, uint8_t LSB, uint8_t CRC) {
-  return true;
+bool 	sht_crc8(uint8_t *ibuf) {
+  return (crc8nrsc_5_byte(ibuf, 2) == ibuf[2]);
 }
 
 /**
@@ -274,7 +275,7 @@ static bool sht31_poll(void) {
         sht_record_i2c_error(sht_state, I2C_error);
         sht_state = sht_init;
       } else {
-        if (sht_crc8(sht_ibuf[0], sht_ibuf[1], sht_ibuf[2])) {
+        if (sht_crc8(sht_ibuf)) {
           i2c_cache[5].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
         } else {
           sht_record_crc_error(1);
@@ -313,12 +314,12 @@ static bool sht31_poll(void) {
         }
       } else {
         // process TRH data
-        if (sht_crc8(sht_ibuf[0], sht_ibuf[1], sht_ibuf[2])) {
+        if (sht_crc8(sht_ibuf)) {
           i2c_cache[6].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
         } else {
           sht_record_crc_error(2);
         }
-        if (sht_crc8(sht_ibuf[3], sht_ibuf[4], sht_ibuf[5])) {
+        if (sht_crc8(sht_ibuf)) {
           i2c_cache[7].cache = (sht_ibuf[3] << 8) | sht_ibuf[4];
         } else {
           sht_record_crc_error(4);
