@@ -107,9 +107,6 @@ static bool ts_poll(void) {
       n_readings = 0;
       sum = 0;
       i2c_write(ts_get_slave_addr(), (const uint8_t *)"\x04", 1);
-      // I2C_txfr_complete = false;
-      // i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
-      // io_write(I2C_0_io, (uint8_t *)"\x04", 1);
       ts_state = ts_init_tx;
       return false;
     case ts_init_tx:
@@ -134,9 +131,6 @@ static bool ts_poll(void) {
       } else {
         nack_limit = 2047;
         i2c_read(ts_get_slave_addr(), (uint8_t *)ts_ibuf, 4);
-        // I2C_txfr_complete = false;
-        // i2c_m_async_set_slaveaddr(&I2C_0, ts_get_slave_addr(), I2C_M_SEVEN);
-        // io_read(I2C_0_io, ts_ibuf, 4);
         ts_state = ts_read_adc_tx;
       }
       return false;
@@ -198,9 +192,10 @@ static bool ts_poll(void) {
 
 enum sht_state_t {sht_init, sht_init_tx,
     sht_issue_read_status, sht_issue_read_status_tx, sht_read_status_tx,
-    sht_issue_convert_trh, sht_issue_convert_trh_tx, sht_read_trh_tx };
+    sht_issue_convert_trh, sht_issue_convert_trh_tx, sht_read_trh_tx,
+    sht_issue_clear_status, sht_issue_clear_status_tx };
 static enum sht_state_t sht_state = sht_init;
-#define SHT_SLAVE_ADDR 0x45
+#define SHT_SLAVE_ADDR 0x44
 static uint8_t sht_ibuf[6];
 
 static void  sht_record_i2c_error(enum sht_state_t sht_state, int32_t I2C_error) {
@@ -209,7 +204,10 @@ static void  sht_record_i2c_error(enum sht_state_t sht_state, int32_t I2C_error)
 }
 
 static void sht_record_crc_error(uint16_t bit) {
-  i2c_cache[8].cache |= (bit << 8);
+  if (bit)
+    i2c_cache[8].cache |= (bit << 8);
+  else
+    i2c_cache[8].cache &= 0x00FF;
 }
 
 /**
@@ -232,76 +230,48 @@ bool 	sht_crc8(uint8_t *ibuf) {
  * @return true if the bus is free and available for another device
  */
 static bool sht31_poll(void) {
+  if (i2c_cache[8].was_read) {
+    sht_record_crc_error(0);
+    ts_record_i2c_error(sht_init, I2C_OK);
+    i2c_cache[8].was_read = false;
+  }
+  if (I2C_error_seen && sht_state != sht_read_trh_tx) {
+    I2C_error_seen = false;
+    sht_record_i2c_error(sht_state, I2C_error);
+    sht_state = sht_init;
+    return true;
+  }
   switch (sht_state) {
     case sht_init:
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x30\xA2", 2);
-      // I2C_txfr_complete = false;
-      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
-      // io_write(I2C_0_io, (uint8_t *)"\x30\xA2", 2);
       sht_state = sht_init_tx;
       return false;
     case sht_init_tx:
-      if (I2C_error_seen) {
-        I2C_error_seen = false;
-        sht_record_i2c_error(sht_state, I2C_error);
-        sht_state = sht_init;
-      } else {
-        sht_state = sht_issue_read_status;
-      }
+      sht_state = sht_issue_read_status;
       return true;
     case sht_issue_read_status:
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\xF3\x2D", 2);
-      // I2C_txfr_complete = false;
-      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
-      // io_write(I2C_0_io, (uint8_t *)"\xF3\x2D", 2);
-      sht_state = sht_read_status_tx;
+      sht_state = sht_issue_read_status_tx;
       return false;
     case sht_issue_read_status_tx:
-      if (I2C_error_seen) {
-        I2C_error_seen = false;
-        sht_record_i2c_error(sht_state, I2C_error);
-        sht_state = sht_init;
-        return true;
-      } else {
-        i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 3);
-        // I2C_txfr_complete = false;
-        // io_read(I2C_0_io, sht_ibuf, 3);
-        sht_state = sht_read_status_tx;
-      }
+      i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 3);
+      sht_state = sht_read_status_tx;
       return false;
     case sht_read_status_tx:
-      if (I2C_error_seen) {
-        I2C_error_seen = false;
-        sht_record_i2c_error(sht_state, I2C_error);
-        sht_state = sht_init;
+      if (sht_crc8(sht_ibuf)) {
+        i2c_cache[5].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
       } else {
-        if (sht_crc8(sht_ibuf)) {
-          i2c_cache[5].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
-        } else {
-          sht_record_crc_error(1);
-        }
-        sht_state = sht_issue_convert_trh;
+        sht_record_crc_error(1);
       }
+      sht_state = sht_issue_convert_trh;
       return true;
     case sht_issue_convert_trh:
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x24\x00", 2);
-      // I2C_txfr_complete = false;
-      // i2c_m_async_set_slaveaddr(&I2C_0, SHT_SLAVE_ADDR, I2C_M_SEVEN);
-      // io_write(I2C_0_io, (uint8_t *)"\x24\x00", 2);
-      sht_state = sht_read_status_tx;
+      sht_state = sht_issue_convert_trh_tx;
       return false;
     case sht_issue_convert_trh_tx:
-      if (I2C_error_seen) {
-        I2C_error_seen = false;
-        sht_record_i2c_error(sht_state, I2C_error);
-        sht_state = sht_init;
-        return true;
-      } else {
-        i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 6);
-        // I2C_txfr_complete = false;
-        // io_read(I2C_0_io, sht_ibuf, 6);
-        sht_state = sht_read_trh_tx;
-      }
+      i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 6);
+      sht_state = sht_read_trh_tx;
       return false;
     case sht_read_trh_tx:
       if (I2C_error_seen) {
@@ -324,8 +294,19 @@ static bool sht31_poll(void) {
         } else {
           sht_record_crc_error(4);
         }
-        sht_state = sht_issue_read_status;
+        if (i2c_cache[5].was_read) {
+          sht_state = sht_issue_clear_status;
+        } else {
+          sht_state = sht_issue_read_status;
+        }
       }
+      return true;
+    case sht_issue_clear_status:
+      i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x30\x41", 2);
+      sht_state = sht_issue_clear_status_tx;
+      return false;
+    case sht_issue_clear_status_tx:
+      sht_state = sht_issue_read_status;
       return true;
     default:
       assert(false, __FILE__, __LINE__);
