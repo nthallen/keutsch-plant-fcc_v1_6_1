@@ -44,7 +44,10 @@ static subbus_cache_word_t i2c_cache[I2C_HIGH_ADDR-I2C_BASE_ADDR+1] = {
   { 0, 0, true,  false,  true, false }, // Offset 5: RW: SHT31_Status
   { 0, 0, true,  false, false, false }, // Offset 6: R:  SHT31_Temperature
   { 0, 0, true,  false, false, false }, // Offset 7: R:  SHT31_Relative_Humidity
-  { 0, 0, true,  false, false, false }  // Offset 8: R:  sht31_state, i2c_error
+  { 0, 0, true,  false, false, false }, // Offset 8: R:  sht31_state, i2c_error
+  { 0, 0, true,  false, false, false }, // Offset 9: R:  I2C error data
+  { 0, 0, true,  false, false, false }, // Offset 10: R: I2C intflag
+  { 0, 0, true,  false, false, false }  // Offset 11: R: I2C status
 };
 
 static int16_t ts_get_slave_addr(void) {
@@ -360,9 +363,14 @@ static enum ts_state_t ts_tx_state;
 static enum sht_state_t sht_tx_state;
 
 static void i2c_record_tx_start() {
+  uint16_t word = 0;
   i2c_tx_state = i2c_state;
   ts_tx_state = ts_state;
   sht_tx_state = sht_state;
+  word = i2c_tx_state << 7;
+  word |= (ts_tx_state & 7) << 4;
+  word |= (sht_tx_state & 0xF);
+  i2c_cache[9].cache = word;
 }
 
 void i2c_write(int16_t i2c_addr, const uint8_t *obuf, int16_t nbytes) {
@@ -417,6 +425,8 @@ static void I2C_0_async_error(struct i2c_m_async_desc *const i2c, int32_t error)
   I2C_error = error;
   I2C_intflag = hri_sercomi2cm_read_INTFLAG_reg(i2c->device.hw);
   I2C_status = hri_sercomi2cm_read_STATUS_reg(i2c->device.hw);
+  i2c_cache[10].cache = I2C_intflag;
+  i2c_cache[11].cache = I2C_status;
   if (error == I2C_ERR_BUS) {
     hri_sercomi2cm_write_STATUS_reg(I2C_0.device.hw, SERCOM_I2CM_STATUS_BUSERR);
     hri_sercomi2cm_clear_INTFLAG_reg(I2C_0.device.hw, I2C_INTFLAG_ERROR);
