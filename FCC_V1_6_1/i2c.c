@@ -19,6 +19,8 @@ static volatile uint8_t ts_ov_status = 0;
 static uint8_t ts_ibuf[4];
 #define TS_OVERFLOW 1
 #define TS_UNDERFLOW 2
+static uint8_t I2C_intflag = 0;
+static uint16_t I2C_status = 0;
 
 
 /**
@@ -61,7 +63,7 @@ enum ts_state_t {ts_init, ts_init_tx, ts_read_adc, ts_read_adc_tx };
 static enum ts_state_t ts_state = ts_init;
 
 static void  ts_record_i2c_error(enum ts_state_t ts_state, int32_t I2C_error) {
-  uint16_t word = ((ts_state & 0x7) << 4) | (I2C_error & 0xF);
+  uint16_t word = ((ts_state & 0x7) << 4) | ((-I2C_error) & 0xF);
   i2c_cache[4].cache = (i2c_cache[4].cache & 0xFF00) | word;
 }
 
@@ -90,9 +92,8 @@ static bool ts_poll(void) {
   if (i2c_cache[4].was_read) {
     ts_ov_status = 0;
     ts_record_ov_status(ts_ov_status);
-    I2C_error = I2C_OK;
     i2c_cache[4].was_read = false;
-    ts_record_i2c_error(ts_state, I2C_OK);
+    ts_record_i2c_error(ts_init, I2C_OK);
    }
 
   switch (ts_state) {
@@ -147,7 +148,6 @@ static bool ts_poll(void) {
             ts_state = ts_read_adc;
           }
         } else {
-          // record the error in the I2C status
           ts_record_i2c_error(ts_state, I2C_error);
           ts_state = ts_init;
         }
@@ -198,8 +198,8 @@ static enum sht_state_t sht_state = sht_init;
 #define SHT_SLAVE_ADDR 0x44
 static uint8_t sht_ibuf[6];
 
-static void  sht_record_i2c_error(enum sht_state_t sht_state, int32_t I2C_error) {
-  uint16_t word = ((sht_state & 0x7) << 4) | (I2C_error & 0xF);
+static void sht_record_i2c_error(enum sht_state_t sht_state, int32_t I2C_error) {
+  uint16_t word = ((sht_state & 0xF) << 4) | ((-I2C_error) & 0xF);
   i2c_cache[8].cache = (i2c_cache[8].cache & 0xFF00) | word;
 }
 
@@ -232,14 +232,8 @@ bool 	sht_crc8(uint8_t *ibuf) {
 static bool sht31_poll(void) {
   if (i2c_cache[8].was_read) {
     sht_record_crc_error(0);
-    ts_record_i2c_error(sht_init, I2C_OK);
+    sht_record_i2c_error(sht_init, I2C_OK);
     i2c_cache[8].was_read = false;
-  }
-  if (I2C_error_seen && sht_state != sht_read_trh_tx) {
-    I2C_error_seen = false;
-    sht_record_i2c_error(sht_state, I2C_error);
-    sht_state = sht_init;
-    return true;
   }
   switch (sht_state) {
     case sht_init:
@@ -247,17 +241,41 @@ static bool sht31_poll(void) {
       sht_state = sht_init_tx;
       return false;
     case sht_init_tx:
-      sht_state = sht_issue_read_status;
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_init;
+      } else {
+        sht_state = sht_issue_read_status;
+      }
       return true;
     case sht_issue_read_status:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+      }
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\xF3\x2D", 2);
       sht_state = sht_issue_read_status_tx;
       return false;
     case sht_issue_read_status_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_issue_read_status;
+        // Do we need to issue a stop?
+        return true;
+      }
       i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 3);
       sht_state = sht_read_status_tx;
       return false;
     case sht_read_status_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_issue_read_status_tx;
+        // Do we need to issue a stop?
+        return true;
+      }
       if (sht_crc8(sht_ibuf)) {
         i2c_cache[5].cache = (sht_ibuf[0] << 8) | sht_ibuf[1];
       } else {
@@ -266,10 +284,21 @@ static bool sht31_poll(void) {
       sht_state = sht_issue_convert_trh;
       return true;
     case sht_issue_convert_trh:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+      }
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x24\x00", 2);
       sht_state = sht_issue_convert_trh_tx;
       return false;
     case sht_issue_convert_trh_tx:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_issue_convert_trh;
+        // Do we need to issue a stop?
+        return true;
+      }
       i2c_read(SHT_SLAVE_ADDR, sht_ibuf, 6);
       sht_state = sht_read_trh_tx;
       return false;
@@ -302,11 +331,21 @@ static bool sht31_poll(void) {
       }
       return true;
     case sht_issue_clear_status:
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+      }
       i2c_write(SHT_SLAVE_ADDR, (const uint8_t *)"\x30\x41", 2);
       sht_state = sht_issue_clear_status_tx;
       return false;
     case sht_issue_clear_status_tx:
-      sht_state = sht_issue_read_status;
+      if (I2C_error_seen) {
+        I2C_error_seen = false;
+        sht_record_i2c_error(sht_state, I2C_error);
+        sht_state = sht_issue_clear_status;
+      } else {
+        sht_state = sht_issue_read_status;
+      }
       return true;
     default:
       assert(false, __FILE__, __LINE__);
@@ -314,8 +353,21 @@ static bool sht31_poll(void) {
   return true;
 }
 
+enum i2c_state_t {i2c_ts, i2c_sht31 };
+static enum i2c_state_t i2c_state = i2c_ts;
+static enum i2c_state_t i2c_tx_state;
+static enum ts_state_t ts_tx_state;
+static enum sht_state_t sht_tx_state;
+
+static void i2c_record_tx_start() {
+  i2c_tx_state = i2c_state;
+  ts_tx_state = ts_state;
+  sht_tx_state = sht_state;
+}
+
 void i2c_write(int16_t i2c_addr, const uint8_t *obuf, int16_t nbytes) {
   assert(I2C_txfr_complete, __FILE__, __LINE__);
+  i2c_record_tx_start();
   I2C_txfr_complete = false;
   i2c_m_async_set_slaveaddr(&I2C_0, i2c_addr, I2C_M_SEVEN);
   io_write(I2C_0_io, obuf, nbytes);
@@ -323,6 +375,7 @@ void i2c_write(int16_t i2c_addr, const uint8_t *obuf, int16_t nbytes) {
 
 void i2c_read(int16_t i2c_addr, uint8_t *ibuf, int16_t nbytes) {
   assert(I2C_txfr_complete, __FILE__, __LINE__);
+  i2c_record_tx_start();
   I2C_txfr_complete = false;
   i2c_m_async_set_slaveaddr(&I2C_0, i2c_addr, I2C_M_SEVEN);
   io_read(I2C_0_io, ibuf, nbytes);
@@ -345,6 +398,8 @@ static void I2C_0_CLOCK_init(void) {
   hri_mclk_set_APBCMASK_SERCOM1_bit(MCLK);
 }
 
+#define I2C_INTFLAG_ERROR (1<<7)
+
 /************************************************************************/
 /* Possible error values:                                               */
 /* I2C_OK 0                      Operation successful                   */
@@ -360,9 +415,11 @@ static void I2C_0_async_error(struct i2c_m_async_desc *const i2c, int32_t error)
   I2C_txfr_complete = true;
   I2C_error_seen = true;
   I2C_error = error;
-  if (error == I2C_ERR_BUS || error == I2C_ERR_ARBLOST) {
-    i2c_enabled = false;
-    _i2c_m_async_set_irq_state(&i2c->device, I2C_M_ASYNC_DEVICE_ERROR, false);
+  I2C_intflag = hri_sercomi2cm_read_INTFLAG_reg(i2c->device.hw);
+  I2C_status = hri_sercomi2cm_read_STATUS_reg(i2c->device.hw);
+  if (error == I2C_ERR_BUS) {
+    hri_sercomi2cm_write_STATUS_reg(I2C_0.device.hw, SERCOM_I2CM_STATUS_BUSERR);
+    hri_sercomi2cm_clear_INTFLAG_reg(I2C_0.device.hw, I2C_INTFLAG_ERROR);
   }
 }
 
@@ -393,9 +450,6 @@ static void i2c_reset() {
   // i2c_m_async_set_slaveaddr(&I2C_0, 0x12, I2C_M_SEVEN);
   // io_write(I2C_0_io, I2C_0_example_str, 12);
 // }
-
-enum i2c_state_t {i2c_ts, i2c_sht31 };
-static enum i2c_state_t i2c_state = i2c_ts;
 
 void i2c_poll(void) {
   enum i2c_state_t input_state = i2c_state;

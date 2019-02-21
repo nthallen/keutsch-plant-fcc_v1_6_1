@@ -16,7 +16,7 @@
   #define SUBBUS_BOARD_ID             11
 #endif
 #ifdef FCC3
-  #define BOARD_REV                   "V7:178:Plant Chamber FCC Rev A V1.3"
+  #define BOARD_REV                   "V7:178:Plant Chamber FCC Rev A S/N 1 V1.4"
   #define SUBBUS_BOARD_ID             13
 #endif
 #ifdef uDACS_12

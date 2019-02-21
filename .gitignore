@@ -2,3 +2,6 @@
 *.avs
 Debug
 *.atzip
+*.sr
+*.dvdat
+generated
