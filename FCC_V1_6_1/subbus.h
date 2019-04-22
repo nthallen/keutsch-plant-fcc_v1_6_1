@@ -3,35 +3,22 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "serial_num.h"
 
-#define FCC3
 #define USE_SUBBUS 1
 
-#ifdef FCC1
-  #define BOARD_REV                   "V7:178:HCHO FCC Rev A V1.1"
-  #define SUBBUS_BOARD_ID             10
-#endif
-#ifdef FCC2
-  #define BOARD_REV                   "V7:178:HCHO FCC Rev A V1.1"
-  #define SUBBUS_BOARD_ID             11
-#endif
-#ifdef FCC3
-  #define BOARD_REV                   "V7:178:Plant Chamber FCC Rev A S/N 1 V1.4"
-  #define SUBBUS_BOARD_ID             13
-#endif
-#ifdef uDACS_12
-#define BOARD_REV                   "V9:178:HCHO uDACS Rev A V1.1"
-#define SUBBUS_BOARD_ID             12
-#endif
-
 #if USE_SUBBUS
-#define SUBBUS_BUILD_NUM            1
 #define SUBBUS_FAIL_RESERVED        0xF000
 #define SUBBUS_INTA_ADDR            0x0001
 #define SUBBUS_BDID_ADDR            0x0002
-#define SUBBUS_FAIL_ADDR            0x0004
-#define SUBBUS_SWITCHES_ADDR        0x0005
-#define SUBBUS_MAX_DRIVERS          6
+#define SUBBUS_BLDNO_ADDR           0x0003
+#define SUBBUS_BDSN_ADDR            0x0004
+#define SUBBUS_INSTID_ADDR          0x0005
+#define SUBBUS_FAIL_ADDR            0x0006
+#define SUBBUS_SWITCHES_ADDR        0x0007
+#define SUBBUS_DESC_FIFO_SIZE_ADDR  0x0008
+#define SUBBUS_DESC_FIFO_ADDR       0x0009
+#define SUBBUS_MAX_DRIVERS          7
 #define SUBBUS_INTERRUPTS           0
 
 #define SUBBUS_ADDR_CMDS 0x18
@@ -50,12 +37,20 @@ void subbus_poll(void);
 void set_fail(uint16_t arg);
 
 typedef struct {
+  /** The current value of this word */
   uint16_t cache;
+  /** The value that has been written. Allows the driver code to do checks for validity */
   uint16_t wvalue;
+  /** True if this word is readable */
   bool readable;
+  /** True if this word has been read */
   bool was_read;
+  /** True if this word is writable */
   bool writable;
+  /** True if this word has been written */
   bool written;
+  /** True to invoke sb_action immediately rather than waiting for poll */
+  bool dynamic;
 } subbus_cache_word_t;
 
 typedef struct {
@@ -63,14 +58,17 @@ typedef struct {
   subbus_cache_word_t *cache;
   void (*reset)(void);
   void (*poll)(void);
+  void (*sb_action)(void); // called if dynamic
   bool initialized;
 } subbus_driver_t;
 
 bool subbus_add_driver(subbus_driver_t *driver);
 extern subbus_driver_t sb_base;
 extern subbus_driver_t sb_fail_sw;
+extern subbus_driver_t sb_board_desc;
 
 bool subbus_cache_iswritten(subbus_driver_t *drv, uint16_t addr, uint16_t *value);
+bool subbus_cache_was_read(subbus_driver_t *drv, uint16_t addr);
 bool subbus_cache_update(subbus_driver_t *drv, uint16_t addr, uint16_t data);
 
 #endif // USE_SUBBUS

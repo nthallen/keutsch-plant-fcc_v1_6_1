@@ -1,5 +1,6 @@
 /* subbus.c for Atmel Studio
  */
+#include <string.h>
 #include "subbus.h"
 
 static subbus_driver_t *drivers[SUBBUS_MAX_DRIVERS];
@@ -48,6 +49,8 @@ int subbus_read( uint16_t addr, uint16_t *rv ) {
       if (cache->readable) {
         *rv = cache->cache;
         cache->was_read = true;
+        if (cache->dynamic && drivers[i]->sb_action)
+          drivers[i]->sb_action();
         return 1;
       }
     }
@@ -69,6 +72,8 @@ int subbus_write( uint16_t addr, uint16_t data) {
       if (cache->writable) {
         cache->wvalue = data;
         cache->written = true;
+        if (cache->dynamic && drivers[i]->sb_action)
+          drivers[i]->sb_action();
         return 1;
       }
     }
@@ -90,18 +95,20 @@ int intr_detach( uint16_t addr );
 void intr_service(void);
 #endif
 
-static subbus_cache_word_t sb_base_cache[SUBBUS_BDID_ADDR+2] = {
-  { 0, 0, 0, 0, 0, 0 }, // Reserved zero address
-  { 0, 0, 0, 0, 0, 0} , // INTA
-  { SUBBUS_BUILD_NUM, 0, 1, 0, 0, 0 }, // Build number (SUBBUS_BDID_ADDR)
-  { SUBBUS_BOARD_ID, 0, 1, 0, 0, 0 }      // Board ID
+static subbus_cache_word_t sb_base_cache[SUBBUS_INSTID_ADDR+1] = {
+  { 0, 0, 0, 0, 0, 0, 0 }, // Reserved zero address
+  { 0, 0, 0, 0, 0, 0, 0} , // INTA
+  { SUBBUS_BOARD_ID, 0, 1, 0, 0, 0, 0 },  // Board ID (SUBBUS_BDID_ADDR)
+  { SUBBUS_BOARD_BUILD_NUM, 0, 1, 0, 0, 0, 0 }, // Build number (SUBBUS_BLDNO_ADDR)
+  { SUBBUS_BOARD_SN, 0, 1, 0, 0, 0, 0 }, // Build number (SUBBUS_BDSN_ADDR)
+  { SUBBUS_BOARD_INSTRUMENT_ID, 0, 1, 0, 0, 0, 0 } // Build number (SUBBUS_BDSN_ADDR)
 };
 
-subbus_driver_t sb_base = { 0, SUBBUS_BDID_ADDR+1, sb_base_cache, 0, 0, false };
+subbus_driver_t sb_base = { 0, SUBBUS_BDSN_ADDR, sb_base_cache, 0, 0, 0, false };
 
 static subbus_cache_word_t sb_fail_sw_cache[SUBBUS_SWITCHES_ADDR-SUBBUS_FAIL_ADDR+1] = {
-  { 0, 0, 1, 0, 1, 0 }, // Fail Register
-  { 0, 0, 1, 0, 0, 0 }  // Switches
+  { 0, 0, 1, 0, 1, 0, 0 }, // Fail Register
+  { 0, 0, 1, 0, 0, 0, 0 }  // Switches
 };
 
 static void sb_fail_sw_reset() {
@@ -116,7 +123,7 @@ static void sb_fail_sw_poll() {
 }
 
 subbus_driver_t sb_fail_sw = { SUBBUS_FAIL_ADDR, SUBBUS_SWITCHES_ADDR,
-    sb_fail_sw_cache, sb_fail_sw_reset, sb_fail_sw_poll, false };
+    sb_fail_sw_cache, sb_fail_sw_reset, sb_fail_sw_poll, 0, false };
 
 
 /**
@@ -138,10 +145,10 @@ bool subbus_cache_iswritten(subbus_driver_t *drv, uint16_t addr, uint16_t *value
   }
   return false;
 }
-  
+
 /**
- * This function differs from subbus_cache_write() in that it directly
- * updates the cache value. subbus_cache_write() is specifically for
+ * This function differs from subbus_write() in that it directly
+ * updates the cache value. subbus_write() is specifically for
  * write originating from the control port. subbus_cache_update() is
  * used by internal functions for storing data acquired from
  * peripherals, or for storing values written from the control
@@ -162,3 +169,49 @@ bool subbus_cache_update(subbus_driver_t *drv, uint16_t addr, uint16_t data) {
   }
   return false;
 }
+
+bool subbus_cache_was_read(subbus_driver_t *drv, uint16_t addr) {
+  if (addr >= drv->low && addr <= drv->high) {
+    subbus_cache_word_t *word = &drv->cache[addr-drv->low];
+    return word->was_read;
+  }
+  return false;
+}
+
+static subbus_cache_word_t board_desc_cache[2] = {
+  { 0, 0, true, false, false, false, false },
+  { 0, 0, true, false, false, false, true }
+};
+
+static struct board_desc_t {
+  const char *desc;
+  int cp;
+  int nc;
+} board_desc;
+
+static void board_desc_init(void) {
+  board_desc.desc = SUBBUS_BOARD_REV;
+  board_desc.cp = 0;
+  board_desc.nc = strlen(board_desc.desc)+1; // Include the trailing NUL
+  subbus_cache_update(&sb_board_desc, SUBBUS_DESC_FIFO_SIZE_ADDR, (board_desc.nc+1)/2);
+  subbus_cache_update(&sb_board_desc, SUBBUS_DESC_FIFO_ADDR,
+  (board_desc.desc[0] & 0xFF) + (board_desc.desc[1]<<8));
+}
+
+static void board_desc_action(void) {
+  if (board_desc_cache[1].was_read) {
+    board_desc.cp += 2;
+    if (board_desc.cp >= board_desc.nc) {
+      board_desc.cp = 0;
+    }
+  }
+  subbus_cache_update(&sb_board_desc, SUBBUS_DESC_FIFO_SIZE_ADDR,
+  ((board_desc.nc-board_desc.cp)+1)/2);
+  subbus_cache_update(&sb_board_desc, SUBBUS_DESC_FIFO_ADDR,
+  (board_desc.desc[board_desc.cp] & 0xFF) + (board_desc.desc[board_desc.cp+1]<<8));
+}
+
+subbus_driver_t sb_board_desc = {
+  SUBBUS_DESC_FIFO_SIZE_ADDR, SUBBUS_DESC_FIFO_ADDR,
+  board_desc_cache, board_desc_init, 0, board_desc_action,
+false };

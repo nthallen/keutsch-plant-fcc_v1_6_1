@@ -1,6 +1,7 @@
 .vs
 *.avs
 Debug
+SN*_Debug
 *.atzip
 *.sr
 *.dvdat

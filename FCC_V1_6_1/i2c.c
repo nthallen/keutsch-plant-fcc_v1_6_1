@@ -37,17 +37,17 @@ static uint16_t I2C_status = 0;
  */
 static subbus_cache_word_t i2c_cache[I2C_HIGH_ADDR-I2C_BASE_ADDR+1] = {
   { I2C_TS_ID_DEFAULT, 0, true,  false,  true, false }, // Offset 0: RW: TS0_Address
-  { 0, 0, true,  false, false, false }, // Offset 1: R:  TS0_Count
-  { 0, 0, true,  false, false, false }, // Offset 2: R:  TS0_Raw_LSW
-  { 0, 0, true,  false, false, false }, // Offset 3: R:  TS0_Raw_MSW
-  { 0, 0, true,  false, false, false }, // Offset 4: R:  ts_state, i2c_error
-  { 0, 0, true,  false,  true, false }, // Offset 5: RW: SHT31_Status
-  { 0, 0, true,  false, false, false }, // Offset 6: R:  SHT31_Temperature
-  { 0, 0, true,  false, false, false }, // Offset 7: R:  SHT31_Relative_Humidity
-  { 0, 0, true,  false, false, false }, // Offset 8: R:  sht31_state, i2c_error
-  { 0, 0, true,  false, false, false }, // Offset 9: R:  I2C error data
-  { 0, 0, true,  false, false, false }, // Offset 10: R: I2C intflag
-  { 0, 0, true,  false, false, false }  // Offset 11: R: I2C status
+  { 0, 0, true,  false, false, false, false }, // Offset 1: R:  TS0_Count
+  { 0, 0, true,  false, false, false, false }, // Offset 2: R:  TS0_Raw_LSW
+  { 0, 0, true,  false, false, false, false }, // Offset 3: R:  TS0_Raw_MSW
+  { 0, 0, true,  false, false, false, false }, // Offset 4: R:  ts_state, i2c_error
+  { 0, 0, true,  false, false, false, false }, // Offset 5: RW: SHT31_Status
+  { 0, 0, true,  false, false, false, false }, // Offset 6: R:  SHT31_Temperature
+  { 0, 0, true,  false, false, false, false }, // Offset 7: R:  SHT31_Relative_Humidity
+  { 0, 0, true,  false, false, false, false }, // Offset 8: R:  sht31_state, i2c_error
+  { 0, 0, true,  false, false, false, false }, // Offset 9: R:  I2C error data
+  { 0, 0, true,  false, false, false, false }, // Offset 10: R: I2C intflag
+  { 0, 0, true,  false, false, false, false }  // Offset 11: R: I2C status
 };
 
 static int16_t ts_get_slave_addr(void) {
@@ -89,7 +89,12 @@ static bool ts_poll(void) {
     sum = 0;
   }
   if (i2c_cache[1].was_read && i2c_cache[2].was_read && i2c_cache[3].was_read) {
+    int32_t scaled = n_readings ?
+      sum * 2 / n_readings : 0;
     read_observed = false;
+    i2c_cache[1].cache = n_readings;
+    i2c_cache[2].cache = scaled & 0xFFFF;
+    i2c_cache[3].cache = (scaled >> 16) & 0xFFFF;
     i2c_cache[1].was_read = i2c_cache[2].was_read = i2c_cache[3].was_read = false;
   }
   if (i2c_cache[4].was_read) {
@@ -438,22 +443,21 @@ static void I2C_0_txfr_complete(struct i2c_m_async_desc *const i2c) {
 }
 
 static void I2C_0_init(void) {
-  if (!sb_i2c.initialized) {
-    I2C_0_CLOCK_init();
-    i2c_m_async_init(&I2C_0, SERCOM1);
-    I2C_0_PORT_init();
-    i2c_m_async_get_io_descriptor(&I2C_0, &I2C_0_io);
-    i2c_m_async_enable(&I2C_0);
-    i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_ERROR, (FUNC_PTR)I2C_0_async_error);
-    i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_TX_COMPLETE, (FUNC_PTR)I2C_0_txfr_complete);
-    i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_RX_COMPLETE, (FUNC_PTR)I2C_0_txfr_complete);
-
-    sb_i2c.initialized = true;
-  }
+  I2C_0_CLOCK_init();
+  i2c_m_async_init(&I2C_0, SERCOM1);
+  I2C_0_PORT_init();
+  i2c_m_async_get_io_descriptor(&I2C_0, &I2C_0_io);
+  i2c_m_async_enable(&I2C_0);
+  i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_ERROR, (FUNC_PTR)I2C_0_async_error);
+  i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_TX_COMPLETE, (FUNC_PTR)I2C_0_txfr_complete);
+  i2c_m_async_register_callback(&I2C_0, I2C_M_ASYNC_RX_COMPLETE, (FUNC_PTR)I2C_0_txfr_complete);
 }
 
 static void i2c_reset() {
   I2C_0_init();
+  I2C_txfr_complete = true;
+  ts_state = ts_init;
+  sht_state = sht_init;
 }
 
 // static void i2c_may_use() {
@@ -463,6 +467,10 @@ static void i2c_reset() {
 
 void i2c_poll(void) {
   enum i2c_state_t input_state = i2c_state;
+  if (i2c_cache[11].written) {
+    i2c_cache[11].written = false;
+    i2c_reset();
+  }
   while (i2c_enabled && I2C_txfr_complete) {
     switch (i2c_state) {
       case i2c_ts:

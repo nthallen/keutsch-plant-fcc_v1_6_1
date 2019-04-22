@@ -128,7 +128,7 @@ static adc_poll_def adc_u2 = {SPI_ADC_U2_ENABLED, adc_init, CS0, 0x10, 0x11, 0x1
 static adc_poll_def adc_u3 = {SPI_ADC_U3_ENABLED, adc_init, CS1, 0x12, 0x13, 0x1A};
 
 /**
- * poll_adc() is only called when SPI_ADC_txfr_complete is non-zero 
+ * poll_adc() is only called when SPI_ADC_txfr_complete is non-zero
  * @return true if we are relinquishing the SPI bus
  */
 static bool poll_adc(adc_poll_def *adc) {
@@ -217,7 +217,7 @@ static dac_poll_def dac_u5 = {SPI_DAC_U5_ENABLED, dac_idle, DACSYNC, {0x14, 0x15
 static uint8_t DACREFENABLE[3] = {0x38, 0x00, 0x01};
 static uint8_t DACupdate[3];
 
-/** 
+/**
  * Only called when SPI bus is free
  * @return true if we have relinquished the bus and cleared our chip select
  */
@@ -306,16 +306,16 @@ static void spi_reset(void) {
  * 0x1A R: ADC_U3_T
  */
 static subbus_cache_word_t spi_cache[SPI_HIGH_ADDR-SPI_BASE_ADDR+1] = {
-  { 0, 0, true,  false, false, false }, // Offset 0: R: ADC Flow 0
-  { 0, 0, true,  false, false, false }, // Offset 1: R: ADC Flow 1
-  { 0, 0, true,  false, false, false }, // Offset 2: R: ADC Flow 2
-  { 0, 0, true,  false, false, false }, // Offset 3: R: ADC Flow 3
-  { 0, 0, true,  false, true,  false }, // Offset 4: RW: DAC Setpoint 0
-  { 0, 0, true,  false, true,  false }, // Offset 5: RW: DAC Setpoint 1
-  { 0, 0, true,  false, true,  false }, // Offset 6: RW: DAC Setpoint 2
-  { 0, 0, true,  false, true,  false }, // Offset 7: RW: DAC Setpoint 3
-  { 0, 0, true,  false, false, false }, // Offset 8: R: ADC_U2_t
-  { 0, 0, true,  false, false, false }  // Offset 9: R: ADC_U3_t
+  { 0, 0, true,  false, false, false, false }, // Offset 0: R: ADC Flow 0
+  { 0, 0, true,  false, false, false, false }, // Offset 1: R: ADC Flow 1
+  { 0, 0, true,  false, false, false, false }, // Offset 2: R: ADC Flow 2
+  { 0, 0, true,  false, false, false, false }, // Offset 3: R: ADC Flow 3
+  { 0, 0, true,  false, true,  false, false }, // Offset 4: RW: DAC Setpoint 0
+  { 0, 0, true,  false, true,  false, false }, // Offset 5: RW: DAC Setpoint 1
+  { 0, 0, true,  false, true,  false, false }, // Offset 6: RW: DAC Setpoint 2
+  { 0, 0, true,  false, true,  false, false }, // Offset 7: RW: DAC Setpoint 3
+  { 0, 0, true,  false, false, false, false }, // Offset 8: R: ADC_U2_t
+  { 0, 0, true,  false, false, false, false }  // Offset 9: R: ADC_U3_t
 };
 
 subbus_driver_t sb_spi = {

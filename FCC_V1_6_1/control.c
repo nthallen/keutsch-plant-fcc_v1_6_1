@@ -1,9 +1,9 @@
 /******************************************************************************
 *
 * @file control.c
-* 
+*
 * Listens for commands from serial
-* 
+*
 * MODIFICATION HISTORY:
 *
 * Ver   Who	 Date	 Changes
@@ -268,7 +268,7 @@ static void parse_command(uint8_t *cmd) {
       SendMsg("B");
       break;
     case 'V':                         // Board Rev.
-      SendMsg(BOARD_REV);             // Respond with Board Rev info
+      SendMsg(SUBBUS_BOARD_REV);             // Respond with Board Rev info
       break;
     case 'D': // Read Switches
 #ifdef SUBBUS_SWITCHES_DEVICE_ID
@@ -349,7 +349,7 @@ void poll_control(void) {
       cmd_byte_num = 0;
 #endif
     }
-}		
+}
 
 /******************************************************************************
 *

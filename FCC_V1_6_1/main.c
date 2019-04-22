@@ -12,6 +12,7 @@ int main(void) {
   i2c_enable(I2C_ENABLE_DEFAULT);
   if (subbus_add_driver(&sb_base) ||
       subbus_add_driver(&sb_fail_sw) ||
+      subbus_add_driver(&sb_board_desc) ||
       subbus_add_driver(&sb_spi) ||
       subbus_add_driver(&sb_cmd) ||
       subbus_add_driver(&sb_i2c)) {
