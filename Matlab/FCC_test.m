@@ -1,5 +1,5 @@
 %%
-cd C:\Users\nort\Documents\Documents\Exp\HCHO\FCC_V1_6\Matlab
+cd C:\Users\nort\Documents\Documents\Exp\HCHO\FCC_V1_6_1\Matlab
 %%
 serial_port_clear();
 %%
@@ -8,17 +8,19 @@ serial_port_clear();
 set(s,'BaudRate',115200);
 %%
 % First check that the board is an FCC
-BdID = read_subbus(s, 3);
-if BdID ~= 10 && BdID ~= 11 && BdID ~= 13
-  error('Expected BdID 10, 11 or 13. Reported %d', BdID);
+BdID = read_subbus(s, 2);
+if BdID ~= 7
+  error('Expected BdID 7. Reported %d', BdID);
 end
-Build = read_subbus(s,2);
-fprintf(1, 'Attached to FCC %d Build # %d\n', BdID, Build);
-if BdID == 13
-  cmd_addr = 26; % 26 is for Plant FCC, 24 for HCHO FCC
-else
-  cmd_addr = 24;
-end
+Build = read_subbus(s,3);
+[SerialNo,SNack] = read_subbus(s,4);
+[InstID,InstIDack] = read_subbus(s,5);
+fprintf(1, 'Attached to FCC S/N %d Build # %d\n', SerialNo, Build);
+cmd_addr = 26; % Currently just for Plant FCC
+%%
+rm_obj = read_multi_prep([8,40,9,0]);
+[vals,ack] = read_multi(s,rm_obj);
+fprintf(1, 'Now figure out how to interpret the result\n');
 %%
 % Connect DAC 0 out to ADC 0 in
 %  J2.A8 FLSET0 to J2.A2 FLOW0

@@ -14,7 +14,6 @@ static struct io_descriptor *I2C_0_io;
 static volatile bool I2C_txfr_complete = true;
 static volatile bool I2C_error_seen = false;
 static volatile int32_t I2C_error = I2C_OK;
-static int32_t ts_i2c_error = I2C_OK;
 static volatile uint8_t ts_ov_status = 0;
 static uint8_t ts_ibuf[4];
 #define TS_OVERFLOW 1
@@ -125,7 +124,7 @@ static bool ts_poll(void) {
           // This is sort of expected
         } else {
           // record the error in the I2C status
-          ts_i2c_error = I2C_error;
+          ts_record_i2c_error(ts_state, I2C_error);
         }
         ts_state = ts_init;
       } else if (i2c_cache[0].written) {

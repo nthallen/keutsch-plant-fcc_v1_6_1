@@ -13,8 +13,8 @@ s = [];
 if nargout > 1
   port_out = '';
 end
-if (nargin < 1 || isempty(port)) && exist('./PulserPort.mat','file')
-  rport = load('./PulserPort.mat');
+if (nargin < 1 || isempty(port)) && exist('./FCCSerialPort.mat','file')
+  rport = load('./FCCSerialPort.mat');
   if isfield(rport,'port')
     port = rport.port;
   end
@@ -35,12 +35,12 @@ end
 if isempty(port)
   if isempty(hw.AvailableSerialPorts)
     % closereq;
-    h = errordlg('No serial port found','Pulser Port Error','modal');
+    h = errordlg('No serial port found','FCC Serial Port Error','modal');
     uiwait(h);
     return;
   else
     sel = listdlg('ListString',hw.AvailableSerialPorts,...
-      'SelectionMode','single','Name','Pulser', ...
+      'SelectionMode','single','Name','FCC_Port', ...
       'PromptString','Select Serial Port:', ...
       'ListSize',[160 50]);
     if isempty(sel)
@@ -48,7 +48,7 @@ if isempty(port)
       return;
     else
       port = hw.AvailableSerialPorts{sel};
-      save PulserPort.mat port
+      save FCCSerialPort.mat port
     end
   end
 end
@@ -72,7 +72,7 @@ try
 catch ME
   h = errordlg(sprintf('Error: %s\nMessage: %s\nport = %s\n', ...
     ME.identifier, ME.message, port), ...
-    'Pulser Port Error', 'modal');
+    'FCC Serial Port Error', 'modal');
   uiwait(h);
   if isopen
     fclose(s);
