@@ -46,7 +46,7 @@ static subbus_cache_word_t i2c_cache[I2C_HIGH_ADDR-I2C_BASE_ADDR+1] = {
   { 0, 0, true,  false, false, false, false }, // Offset 8: R:  sht31_state, i2c_error
   { 0, 0, true,  false, false, false, false }, // Offset 9: R:  I2C error data
   { 0, 0, true,  false, false, false, false }, // Offset 10: R: I2C intflag
-  { 0, 0, true,  false, false, false, false }  // Offset 11: R: I2C status
+  { 0, 0, true,  false, true,  false, false }  // Offset 11: R: I2C status, reset
 };
 
 static int16_t ts_get_slave_addr(void) {
