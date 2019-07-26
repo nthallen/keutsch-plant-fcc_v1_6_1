@@ -94,6 +94,9 @@ static void cmd_poll(void) {
       case 39: gpio_set_pin_level(channel_pins[3].open, true); break;
       case 40: gpio_set_pin_level(channel_pins[3].close, false); break;
       case 41: gpio_set_pin_level(channel_pins[3].close, true); break;
+      case 42: gpio_set_pin_level(channel_pins[2].close, false); break;
+      case 43:
+       gpio_set_pin_level(channel_pins[2].close, true); break;
       default:
         if (cmd < 32) {
           int channel = (cmd & 0x1C) >> 2;
